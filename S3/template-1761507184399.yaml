@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: S3 static website with public read access
+
+Resources:
+  S3Bucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+
+  BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Id: MyPolicy
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Join
+              - ""
+              - - "arn:aws:s3:::"
+                - !Ref S3Bucket
+                - "/*"
+
+Outputs:
+  WebsiteURL:
+    Description: URL for website hosted on S3
+    Value: !GetAtt S3Bucket.WebsiteURL
+
+  S3BucketSecureURL:
+    Description: HTTPS REST endpoint for the bucket
+    Value: !Join
+      - ""
+      - - "https://"
+        - !GetAtt S3Bucket.DomainName
